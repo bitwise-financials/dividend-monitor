@@ -14,6 +14,24 @@
 
 ---
 
+## 📁 Project Structure
+
+```
+dividend-monitor/
+├── .github/
+│   └── workflows/
+│       └── dividend-monitor.yml
+├── config/
+│   └── tickers.txt
+├── data/
+│   └── dividends_data.json
+├── check_dividends.py
+├── requirements.txt
+├── .gitignore
+└── README.md
+```
+---
+
 ## Technical Architecture
 
 ```
@@ -25,7 +43,7 @@ Check for Change ≥ ±20%
      |
      ├── Yes → Trigger Alert → Send Email Notification
      |
-     └── No  → Log the Data in SUPABASE Database
+     └── No  → Log the Data in JSON Database
 ```
 
 - **Language:** Python 3.9  
