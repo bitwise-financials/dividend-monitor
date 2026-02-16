@@ -126,7 +126,7 @@ def check_for_alerts(ticker, stored_dividends, new_dividends):
     if abs(change_pct) >= ALERT_THRESHOLD:
         direction = "increased" if change_pct > 0 else "decreased"
         alert_message = f"""
-🚨 DIVIDEND ALERT for {ticker}
+🚨 DIVIDEND ALERT for {ticker} 🚨
 
 New Dividend Announced: ${latest_amount:.4f}
 Previous Dividend: ${previous_amount:.4f}
@@ -137,7 +137,7 @@ The dividend has {direction} by more than {ALERT_THRESHOLD*100:.0f}%.
 Date: {latest_new['date']}
 
 ---
-Dividend Monitor - Laszlo Borsics
+Dividend Monitor - GitHub Actions
         """
         return True, alert_message, latest_new
     
@@ -208,7 +208,18 @@ def main():
         # Get stored dividends for this ticker
         stored_dividends = stored_data.get(ticker, [])
         
-        # Check for alerts
+        # Check if this is a NEW stock (not in our data yet)
+        if not stored_dividends:
+            # First time monitoring this stock - store ALL historical data without alerts
+            print(f"✨ NEW STOCK DETECTED: {ticker}")
+            print(f"Adding to monitoring - storing all historical dividends")
+            stored_data[ticker] = new_dividends
+            data_updated = True
+            print(f"✅ Stored {len(new_dividends)} historical dividend records for {ticker}")
+            print(f"Future runs will check for new dividends and send alerts\n")
+            continue  # Skip to next ticker, don't check for alerts
+        
+        # Stock already exists in our data - check for NEW dividends and alerts
         should_alert, alert_message, new_dividend = check_for_alerts(ticker, stored_dividends, new_dividends)
         
         if should_alert:
@@ -220,19 +231,11 @@ def main():
         # Update stored data - ONLY append new dividends, don't overwrite
         if new_dividend:
             # Append the new dividend to stored data
-            if ticker not in stored_data:
-                stored_data[ticker] = []
             stored_data[ticker].append(new_dividend)
             print(f"Added new dividend for {ticker}: ${new_dividend['amount']:.4f} on {new_dividend['date']}")
             data_updated = True
-        elif not stored_dividends:
-            # First time monitoring this stock - store all historical data
-            print(f"First time monitoring {ticker} - storing all historical dividends")
-            stored_data[ticker] = new_dividends
-            data_updated = True
-            print(f"Stored {len(new_dividends)} historical dividend records for {ticker}")
         else:
-            print(f"No updates needed for {ticker}")
+            print(f"No new dividends detected for {ticker}")
         
         print(f"Total stored dividends for {ticker}: {len(stored_data.get(ticker, []))}\n")
     
