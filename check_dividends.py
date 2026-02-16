@@ -79,30 +79,48 @@ def fetch_dividends(ticker):
 def check_for_alerts(ticker, stored_dividends, new_dividends):
     """
     Check if new dividends meet alert criteria
-    Returns: (should_alert, alert_message)
+    Returns: (should_alert, alert_message, new_dividend_to_add)
     """
-    if not new_dividends or len(new_dividends) < 2:
-        return False, None
+    if not new_dividends:
+        return False, None, None
     
-    # Get the latest dividend
-    latest = new_dividends[-1]
-    previous = new_dividends[-2]
+    # Get stored dates for comparison
+    stored_dates = [d['date'] for d in stored_dividends] if stored_dividends else []
     
-    # Check if this is a new dividend (not in stored data)
-    if stored_dividends:
-        stored_dates = [d['date'] for d in stored_dividends]
-        if latest['date'] in stored_dates:
-            # Not a new dividend
-            return False, None
+    # Find dividends that are NOT in stored data (truly new)
+    truly_new_dividends = [d for d in new_dividends if d['date'] not in stored_dates]
+    
+    # If no new dividends, return early
+    if not truly_new_dividends:
+        print(f"No new dividends detected for {ticker}")
+        return False, None, None
+    
+    # Get the newest dividend
+    latest_new = truly_new_dividends[-1]
+    
+    # For comparison, we need the previous dividend
+    # This could be the last stored dividend OR the second-to-last new dividend
+    if len(stored_dividends) > 0:
+        # Use the most recent stored dividend as previous
+        previous = stored_dividends[-1]
+    elif len(new_dividends) >= 2:
+        # No stored data, use second-to-last from API
+        previous = new_dividends[-2]
+    else:
+        # Only one dividend total, can't compare
+        print(f"Only one dividend available for {ticker}, cannot compare")
+        return False, None, latest_new
     
     # Calculate percentage change
-    latest_amount = latest['amount']
+    latest_amount = latest_new['amount']
     previous_amount = previous['amount']
     
     if previous_amount == 0:
-        return False, None
+        return False, None, latest_new
     
     change_pct = (latest_amount - previous_amount) / previous_amount
+    
+    print(f"New dividend for {ticker}: ${latest_amount:.4f} (previous: ${previous_amount:.4f}, change: {change_pct*100:.2f}%)")
     
     # Check if change exceeds threshold
     if abs(change_pct) >= ALERT_THRESHOLD:
@@ -116,14 +134,14 @@ Change: {change_pct*100:.2f}%
 
 The dividend has {direction} by more than {ALERT_THRESHOLD*100:.0f}%.
 
-Date: {latest['date']}
+Date: {latest_new['date']}
 
 ---
 Dividend Monitor - GitHub Actions
         """
-        return True, alert_message
+        return True, alert_message, latest_new
     
-    return False, None
+    return False, None, latest_new
 
 
 def send_email_alert(subject, message):
@@ -174,6 +192,7 @@ def main():
     stored_data = load_stored_data()
     
     alerts_sent = 0
+    data_updated = False
     
     # Check each ticker
     for ticker in tickers:
@@ -190,22 +209,38 @@ def main():
         stored_dividends = stored_data.get(ticker, [])
         
         # Check for alerts
-        should_alert, alert_message = check_for_alerts(ticker, stored_dividends, new_dividends)
+        should_alert, alert_message, new_dividend = check_for_alerts(ticker, stored_dividends, new_dividends)
         
         if should_alert:
             print(f"🚨 ALERT CONDITION MET for {ticker}!")
             subject = f"Dividend Alert: {ticker} - Significant Change Detected"
             if send_email_alert(subject, alert_message):
                 alerts_sent += 1
-        else:
-            print(f"No alert conditions met for {ticker}")
         
-        # Update stored data (always update to latest)
-        stored_data[ticker] = new_dividends
-        print(f"Updated stored data for {ticker} ({len(new_dividends)} dividend records)\n")
+        # Update stored data - ONLY append new dividends, don't overwrite
+        if new_dividend:
+            # Append the new dividend to stored data
+            if ticker not in stored_data:
+                stored_data[ticker] = []
+            stored_data[ticker].append(new_dividend)
+            print(f"Added new dividend for {ticker}: ${new_dividend['amount']:.4f} on {new_dividend['date']}")
+            data_updated = True
+        elif not stored_dividends:
+            # First time monitoring this stock - store all historical data
+            print(f"First time monitoring {ticker} - storing all historical dividends")
+            stored_data[ticker] = new_dividends
+            data_updated = True
+            print(f"Stored {len(new_dividends)} historical dividend records for {ticker}")
+        else:
+            print(f"No updates needed for {ticker}")
+        
+        print(f"Total stored dividends for {ticker}: {len(stored_data.get(ticker, []))}\n")
     
-    # Save updated data
-    save_stored_data(stored_data)
+    # Save updated data only if there were changes
+    if data_updated:
+        save_stored_data(stored_data)
+    else:
+        print("No data changes detected, skipping file update")
     
     print(f"\n=== Dividend Monitor Completed ===")
     print(f"Total alerts sent: {alerts_sent}")
