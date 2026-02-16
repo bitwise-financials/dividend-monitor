@@ -126,7 +126,7 @@ def check_for_alerts(ticker, stored_dividends, new_dividends):
     if abs(change_pct) >= ALERT_THRESHOLD:
         direction = "increased" if change_pct > 0 else "decreased"
         alert_message = f"""
-🚨 DIVIDEND ALERT for {ticker} 🚨
+🚨 DIVIDEND ALERT for {ticker}
 
 New Dividend Announced: ${latest_amount:.4f}
 Previous Dividend: ${previous_amount:.4f}
@@ -137,7 +137,7 @@ The dividend has {direction} by more than {ALERT_THRESHOLD*100:.0f}%.
 Date: {latest_new['date']}
 
 ---
-Dividend Monitor - GitHub Actions
+Dividend Monitor - Laszlo Borsics
         """
         return True, alert_message, latest_new
     
