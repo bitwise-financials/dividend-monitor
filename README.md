@@ -32,7 +32,7 @@ dividend-monitor/
 ```
 ---
 
-## Technical Architecture
+## ⚙️ Technical Architecture
 
 ```
 Stock Watchlist
