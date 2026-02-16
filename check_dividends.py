@@ -211,11 +211,11 @@ def main():
         # Check if this is a NEW stock (not in our data yet)
         if not stored_dividends:
             # First time monitoring this stock - store ALL historical data without alerts
-            print(f"✨ NEW STOCK DETECTED: {ticker}")
+            print(f"NEW STOCK DETECTED: {ticker}")
             print(f"Adding to monitoring - storing all historical dividends")
             stored_data[ticker] = new_dividends
             data_updated = True
-            print(f"✅ Stored {len(new_dividends)} historical dividend records for {ticker}")
+            print(f"Stored {len(new_dividends)} historical dividend records for {ticker} ✅")
             print(f"Future runs will check for new dividends and send alerts\n")
             continue  # Skip to next ticker, don't check for alerts
         
