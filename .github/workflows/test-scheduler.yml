@@ -1,0 +1,15 @@
+name: Test Scheduler
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Simple test
+      run: |
+        echo "Workflow ran at: $(date)"
+        echo "This is a test to verify scheduling works"
