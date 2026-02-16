@@ -1,0 +1,4 @@
+# Stock Tickers to Monitor (add one ticker per line)
+
+AAPL
+MSFT
