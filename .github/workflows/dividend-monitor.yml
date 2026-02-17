@@ -2,8 +2,8 @@ name: Dividend Monitor
 
 on:
   schedule:
-    # Run every 30 minutes
-    - cron: '*/30 * * * *'
+    # Run every 10 minutes
+    - cron: '*/10 * * * *'
   
   # Allow manual trigger
   workflow_dispatch:
